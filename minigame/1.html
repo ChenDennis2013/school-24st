@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honor of 24 Solar Terms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spring: '#4ade80',    // 春天 - 绿色
+                        summer: '#f97316',    // 夏天 - 橙色
+                        autumn: '#f59e0b',    // 秋天 - 金色
+                        winter: '#3b82f6',    // 冬天 - 蓝色
+                        primary: '#165DFF',
+                        secondary: '#FF7D00',
+                        neutral: '#F5F7FA'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .card-transition {
+                transition: all 0.3s ease;
+            }
+            .scale-hover {
+                transition: transform 0.2s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.03);
+            }
+            .bg-blur {
+                backdrop-filter: blur(8px);
+            }
+            .rotate-card {
+                transform: rotateY(180deg);
+            }
+            .preserve-3d {
+                transform-style: preserve-3d;
+            }
+            .backface-hidden {
+                backface-visibility: hidden;
+            }
+            .perspective {
+                perspective: 1000px;
+            }
+            .card-height {
+                height: 100px;
+            }
+            @screen sm {
+                .card-height {
+                    height: 120px;
+                }
+            }
+            @screen md {
+                .card-height {
+                    height: 140px;
+                }
+            }
+            .card-image {
+                object-fit: cover;
+                width: 100%;
+                height: 100%;
+                border-radius: 0.75rem;
+            }
+            .card-text {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 0.5rem;
+                text-align: center;
+                border-bottom-left-radius: 0.75rem;
+                border-bottom-right-radius: 0.75rem;
+            }
+            .text-shadow-sm {
+                text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-neutral to-white min-h-screen font-sans text-gray-800" style="background-image: url('https://game.gtimg.cn/images/yxzj/coming/system/image/20171013/13_1024616.png')">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white/80 bg-blur shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-days text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-primary">Honor of 24 Solar Terms</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="reset-btn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-1 transition-all shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-refresh"></i>
+                    <span>RESET</span>
+                </button>
+                <div class="hidden md:flex items-center space-x-1">
+                    <i class="fa-solid fa-trophy text-secondary"></i>
+                    <span id="score" class="font-bold text-lg">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 游戏介绍 -->
+        <section class="mb-10 text-center max-w-3xl mx-auto">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4 text-gray-800 text-shadow">
+                Honor of 24 Solar Terms
+            </h2>
+            <p class="text-gray-600 text-lg mb-6">
+                Match the Chinese names of the solar terms with the corresponding English.
+            </p>
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <span class="px-3 py-1 rounded-full bg-spring/20 text-spring font-medium">Spring</span>
+                <span class="px-3 py-1 rounded-full bg-summer/20 text-summer font-medium">Summer</span>
+                <span class="px-3 py-1 rounded-full bg-autumn/20 text-autumn font-medium">Autumn</span>
+                <span class="px-3 py-1 rounded-full bg-winter/20 text-winter font-medium">Winter</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4">
+                <div class="flex items-center space-x-1 bg-green-100 px-3 py-2 rounded-lg">
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span>Correct</span>
+                </div>
+                <div class="flex items-center space-x-1 bg-red-100 px-3 py-2 rounded-lg">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span>Incorrect</span>
+                </div>
+                <div class="flex items-center space-x-1 bg-gray-100 px-3 py-2 rounded-lg">
+                    <div class="w-3 h-3 rounded-full bg-gray-400"></div>
+                    <span>Unmatched</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 游戏区域 -->
+        <section class="max-w-6xl mx-auto">
+            <!-- 季节选择 -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button class="season-btn px-6 py-3 rounded-xl font-medium transition-all shadow-md" data-season="all">
+                    All Seasons
+                </button>
+                <button class="season-btn px-6 py-3 rounded-xl font-medium transition-all shadow-md bg-spring/10 text-spring" data-season="spring">
+                    Spring
+                </button>
+                <button class="season-btn px-6 py-3 rounded-xl font-medium transition-all shadow-md bg-summer/10 text-summer" data-season="summer">
+                    Summer
+                </button>
+                <button class="season-btn px-6 py-3 rounded-xl font-medium transition-all shadow-md bg-autumn/10 text-autumn" data-season="autumn">
+                    Autumn
+                </button>
+                <button class="season-btn px-6 py-3 rounded-xl font-medium transition-all shadow-md bg-winter/10 text-winter" data-season="winter">
+                    Winter
+                </button>
+            </div>
+
+            <!-- 游戏卡片区域 -->
+            <div id="game-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 perspective">
+                <!-- 卡片将通过JS动态生成 -->
+            </div>
+        </section>
+
+        <!-- 游戏结果弹窗 -->
+        <div id="result-modal" class="fixed inset-0 flex items-center justify-center z-50 bg-black/50 bg-blur hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all scale-100 shadow-2xl">
+                <div class="text-center">
+                    <div id="result-icon" class="text-6xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full"></div>
+                    <h3 id="result-title" class="text-2xl font-bold mb-2"></h3>
+                    <p id="result-message" class="text-gray-600 mb-6"></p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="play-again-btn" class="px-6 py-3 bg-primary text-white rounded-lg font-medium transition-all hover:bg-primary/90 shadow-md hover:shadow-lg">
+                            再玩一次
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 24节气数据（使用王者荣耀的图片）
+        const solarTerms = {
+            spring: [
+                { name: "立春", english: "Start of Spring", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg" },
+                { name: "雨水", english: "Rain Water", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/548/548.jpg" },
+                { name: "惊蛰", english: "Insects Awaken", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/544/544.jpg" },
+                { name: "春分", english: "Spring Equinox", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/312/312.jpg" },
+                { name: "清明", english: "Clear and Bright", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/190/190.jpg" },
+                { name: "谷雨", english: "Grain Rain", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/123/123.jpg" }
+            ],
+            summer: [
+                { name: "立夏", english: "Start of Summer", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg" },
+                { name: "小满", english: "Grain Buds", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/548/548.jpg" },
+                { name: "芒种", english: "Grain in Ear", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/544/544.jpg" },
+                { name: "夏至", english: "Summer Solstice", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/312/312.jpg" },
+                { name: "小暑", english: "Minor Heat", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/190/190.jpg" },
+                { name: "大暑", english: "Major Heat", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/123/123.jpg" }
+            ],
+            autumn: [
+                { name: "立秋", english: "Start of Autumn", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg" },
+                { name: "处暑", english: "the End of Heat", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/548/548.jpg" },
+                { name: "白露", english: "White Dew", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/544/544.jpg" },
+                { name: "秋分", english: "Autumn Equinox", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/312/312.jpg" },
+                { name: "寒露", english: "Cold Dew", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/190/190.jpg" },
+                { name: "霜降", english: "Frost's Descent", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/123/123.jpg" }
+            ],
+            winter: [
+                { name: "立冬", english: "Start of Winter", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg" },
+                { name: "小雪", english: "Minor Snow", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/548/548.jpg" },
+                { name: "大雪", english: "Major Snow", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/544/544.jpg" },
+                { name: "冬至", english: "Winter Solstice", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/312/312.jpg" },
+                { name: "小寒", english: "Minor Cold", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/190/190.jpg" },
+                { name: "大寒", english: "Major Cold", img: "https://game.gtimg.cn/images/yxzj/img201606/heroimg/123/123.jpg" }
+            ]
+        };
+
+        // 当前选中的季节
+        let currentSeason = 'all';
+        // 游戏卡片
+        let gameCards = [];
+        // 已翻开的卡片
+        let flippedCards = [];
+        // 已匹配的卡片
+        let matchedPairs = 0;
+        // 总匹配数
+        let totalPairs = 0;
+        // 游戏是否正在进行
+        let isPlaying = false;
+        // 分数
+        let score = 0;
+
+        // DOM 元素
+        const gameContainer = document.getElementById('game-container');
+        const resetBtn = document.getElementById('reset-btn');
+        const scoreDisplay = document.getElementById('score');
+        const resultModal = document.getElementById('result-modal');
+        const resultIcon = document.getElementById('result-icon');
+        const resultTitle = document.getElementById('result-title');
+        const resultMessage = document.getElementById('result-message');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const seasonBtns = document.querySelectorAll('.season-btn');
+
+        // 初始化游戏
+        function initGame(season = 'all') {
+            // 重置游戏状态
+            gameCards = [];
+            flippedCards = [];
+            matchedPairs = 0;
+            score = 0;
+            scoreDisplay.textContent = score;
+            currentSeason = season;
+            
+            // 获取对应季节的节气数据
+            let terms = [];
+            if (season === 'all') {
+                Object.values(solarTerms).forEach(seasonTerms => {
+                    terms = [...terms, ...seasonTerms];
+                });
+            } else {
+                terms = [...solarTerms[season]];
+            }
+            
+            // 创建游戏卡片数据
+            totalPairs = terms.length;
+            // 为每个节气创建中英文两个卡片
+            const allCards = [...terms.map(term => ({ ...term, type: 'chinese' })), 
+                             ...terms.map(term => ({ ...term, type: 'english' }))];
+            
+            // 洗牌算法
+            gameCards = shuffleArray(allCards);
+            
+            // 生成游戏卡片
+            renderGameCards();
+            
+            // 更新季节按钮状态
+            updateSeasonButtons(season);
+            
+            // 游戏开始
+            isPlaying = true;
+        }
+
+        // 洗牌算法
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // 渲染游戏卡片
+        function renderGameCards() {
+            gameContainer.innerHTML = '';
+            
+            gameCards.forEach((card, index) => {
+                // 根据节气所属季节设置颜色
+                let seasonColor = '';
+                if (currentSeason === 'all') {
+                    if (solarTerms.spring.some(t => t.name === card.name)) seasonColor = 'spring';
+                    else if (solarTerms.summer.some(t => t.name === card.name)) seasonColor = 'summer';
+                    else if (solarTerms.autumn.some(t => t.name === card.name)) seasonColor = 'autumn';
+                    else if (solarTerms.winter.some(t => t.name === card.name)) seasonColor = 'winter';
+                } else {
+                    seasonColor = currentSeason;
+                }
+                
+                // 创建卡片元素
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card perspective cursor-pointer card-transition card-height';
+                cardElement.dataset.index = index;
+                cardElement.dataset.id = card.name;
+                cardElement.dataset.type = card.type;
+                
+                // 卡片正面
+                const frontFace = document.createElement('div');
+                frontFace.className = `front-face absolute w-full h-full backface-hidden rounded-xl flex items-center justify-center shadow-card hover:shadow-card-hover scale-hover ${getSeasonBgClass(seasonColor)}`;
+                
+                // 卡片背面
+                const backFace = document.createElement('div');
+                backFace.className = 'back-face absolute w-full h-full backface-hidden rounded-xl shadow-card hover:shadow-card-hover bg-white rotate-card overflow-hidden';
+                
+                // 设置卡片内容
+                if (card.type === 'chinese') {
+                    backFace.innerHTML = `
+                        <img src="${card.img}" alt="${card.name}" class="card-image">
+                        <div class="card-text">
+                            <div class="text-xl font-bold">${card.name}</div>
+                        </div>
+                    `;
+                } else {
+                    backFace.innerHTML = `
+                        <img src="${card.img}" alt="${card.english}" class="card-image">
+                        <div class="card-text">
+                            <div class="text-lg font-medium">${card.english}</div>
+                        </div>
+                    `;
+                }
+                
+                // 节气图标
+                frontFace.innerHTML = `
+                    <div class="flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-calendar-days text-3xl mb-2 text-white"></i>
+                        <div class="text-white font-medium">Solar Term</div>
+                    </div>
+                `;
+                
+                // 组装卡片
+                cardElement.appendChild(frontFace);
+                cardElement.appendChild(backFace);
+                cardElement.style.transformStyle = 'preserve-3d';
+                cardElement.style.transition = 'transform 0.5s';
+                
+                // 添加点击事件
+                cardElement.addEventListener('click', () => flipCard(cardElement));
+                
+                // 添加到游戏容器
+                gameContainer.appendChild(cardElement);
+            });
+            
+            // 自动翻开所有卡片
+            setTimeout(() => {
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.add('flipped');
+                    card.style.transform = 'rotateY(180deg)';
+                });
+                
+                // 3秒后自动翻回
+                setTimeout(() => {
+                    document.querySelectorAll('.card').forEach(card => {
+                        card.classList.remove('flipped');
+                        card.style.transform = 'rotateY(0deg)';
+                    });
+                }, 3000);
+            }, 1000);
+        }
+
+        // 根据季节获取背景类
+        function getSeasonBgClass(season) {
+            const bgClasses = {
+                spring: 'bg-gradient-to-br from-spring/80 to-spring text-white',
+                summer: 'bg-gradient-to-br from-summer/80 to-summer text-white',
+                autumn: 'bg-gradient-to-br from-autumn/80 to-autumn text-white',
+                winter: 'bg-gradient-to-br from-winter/80 to-winter text-white'
+            };
+            return bgClasses[season] || 'bg-gradient-to-br from-primary/80 to-primary text-white';
+        }
+
+        // 翻转卡片
+        function flipCard(cardElement) {
+            // 如果游戏未开始、卡片已翻开或已匹配，或者已经翻开了两张卡片，则不执行操作
+            if (!isPlaying || cardElement.classList.contains('flipped') || cardElement.classList.contains('matched') || flippedCards.length >= 2) {
+                return;
+            }
+            
+            // 翻转卡片
+            cardElement.classList.add('flipped');
+            cardElement.style.transform = 'rotateY(180deg)';
+            
+            // 添加到已翻开的卡片数组
+            flippedCards.push(cardElement);
+            
+            // 如果翻开了两张卡片，检查是否匹配
+            if (flippedCards.length === 2) {
+                setTimeout(checkForMatch, 800);
+            }
+        }
+
+        // 检查卡片是否匹配
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            
+            // 检查卡片ID相同但类型不同（中文和英文）
+            if (card1.dataset.id === card2.dataset.id && card1.dataset.type !== card2.dataset.type) {
+                // 匹配成功
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                
+                // 根据季节设置匹配颜色
+                let seasonColor = '';
+                if (currentSeason === 'all') {
+                    if (solarTerms.spring.some(t => t.name === card1.dataset.id)) seasonColor = 'spring';
+                    else if (solarTerms.summer.some(t => t.name === card1.dataset.id)) seasonColor = 'summer';
+                    else if (solarTerms.autumn.some(t => t.name === card1.dataset.id)) seasonColor = 'autumn';
+                    else if (solarTerms.winter.some(t => t.name === card1.dataset.id)) seasonColor = 'winter';
+                } else {
+                    seasonColor = currentSeason;
+                }
+                
+                // 设置匹配成功的样式
+                card1.querySelector('.back-face').classList.add(`${seasonColor}/10`, 'border-2', `border-${seasonColor}`);
+                card2.querySelector('.back-face').classList.add(`${seasonColor}/10`, 'border-2', `border-${seasonColor}`);
+                
+                // 增加匹配对数和分数
+                matchedPairs++;
+                score += 10;
+                scoreDisplay.textContent = score;
+                
+                // 检查游戏是否结束
+                if (matchedPairs === totalPairs) {
+                    setTimeout(endGame, 500);
+                }
+            } else {
+                // 匹配失败，翻回
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.style.transform = 'rotateY(0deg)';
+                    card2.style.transform = 'rotateY(0deg)';
+                    
+                    // 减少分数
+                    if (score > 0) {
+                        score -= 2;
+                        scoreDisplay.textContent = score;
+                    }
+                }, 800);
+            }
+            
+            // 重置已翻开的卡片数组
+            flippedCards = [];
+        }
+
+        // 游戏结束
+        function endGame() {
+            isPlaying = false;
+            
+            // 设置结果弹窗内容
+            resultIcon.className = 'text-6xl mb-4 mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-green-100 text-green-500';
+            resultIcon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+            resultTitle.textContent = 'Congratulations!';
+            resultMessage.textContent = `You've matched all the solar terms successfully, score: ${score}`;
+            
+            // 显示结果弹窗
+            resultModal.classList.remove('hidden');
+        }
+
+        // 更新季节按钮状态
+        function updateSeasonButtons(season) {
+            seasonBtns.forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                if (btn.dataset.season === season) {
+                    btn.classList.add('bg-primary', 'text-white');
+                } else {
+                    // 根据季节添加相应的颜色
+                    if (btn.dataset.season === 'spring') {
+                        btn.classList.add('bg-spring/10', 'text-spring');
+                    } else if (btn.dataset.season === 'summer') {
+                        btn.classList.add('bg-summer/10', 'text-summer');
+                    } else if (btn.dataset.season === 'autumn') {
+                        btn.classList.add('bg-autumn/10', 'text-autumn');
+                    } else if (btn.dataset.season === 'winter') {
+                        btn.classList.add('bg-winter/10', 'text-winter');
+                    } else {
+                        btn.classList.add('bg-gray-100', 'text-gray-700');
+                    }
+                }
+            });
+        }
+
+        // 事件监听器
+        resetBtn.addEventListener('click', () => initGame(currentSeason));
+        playAgainBtn.addEventListener('click', () => {
+            resultModal.classList.add('hidden');
+            initGame(currentSeason);
+        });
+        
+        // 季节按钮点击事件
+        seasonBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const season = btn.dataset.season;
+                if (season !== currentSeason) {
+                    initGame(season);
+                }
+            });
+        });
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
+    
