@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24节气配对游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        spring: '#4ade80',
+                        summer: '#f97316',
+                        autumn: '#eab308',
+                        winter: '#38bdf8',
+                        primary: '#165DFF',
+                        secondary: '#722ED1',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-hover {
+                transition: all 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .season-transition {
+                transition: all 0.5s ease-in-out;
+            }
+            .float-animation {
+                animation: float 3s ease-in-out infinite;
+            }
+            .timer-warning {
+                animation: warning 1s ease-in-out infinite;
+            }
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+            @keyframes warning {
+                0%, 100% { color: #ef4444; }
+                50% { color: #991b1b; }
+            }
+            .matched-card {
+                opacity: 0.7;
+                background-color: rgba(16, 185, 129, 0.1);
+                border-color: rgba(16, 185, 129, 0.5);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen" style="background-image: url('https://hao6.qhimg.com/t01a7c865309977d255.jpg')">
+    <audio controls="controls" autoplay="autoplay">
+        <source src="bgm.mp3" type="audio/mpeg" />
+    </audio>
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 头部区域 -->
+        <header class="text-center mb-8">
+            <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary mb-2">24节气配对游戏</h1>
+            <p class="text-gray-600 text-lg mb-6">将中文节气与对应的英文名称配对，了解中国传统文化</p>
+            
+            <!-- 模式选择 -->
+            <div class="flex flex-wrap justify-center gap-3 mb-6">
+                <button id="normalModeBtn" class="px-6 py-3 rounded-full bg-primary text-white font-medium shadow-lg hover:shadow-primary/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-clock-o mr-2"></i>普通模式
+                </button>
+                <button id="timedModeBtn" class="px-6 py-3 rounded-full bg-secondary text-white font-medium shadow-lg hover:shadow-secondary/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-bolt mr-2"></i>计时模式
+                </button>
+            </div>
+            
+            <!-- 季节选择器 -->
+            <div class="flex flex-wrap justify-center gap-3 mb-8">
+                <button id="springBtn" class="season-btn px-6 py-3 rounded-full bg-spring text-white font-medium shadow-lg hover:shadow-spring/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-leaf mr-2"></i>春天
+                </button>
+                <button id="summerBtn" class="season-btn px-6 py-3 rounded-full bg-summer text-white font-medium shadow-lg hover:shadow-summer/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-sun mr-2"></i>夏天
+                </button>
+                <button id="autumnBtn" class="season-btn px-6 py-3 rounded-full bg-autumn text-white font-medium shadow-lg hover:shadow-autumn/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-seedling mr-2"></i>秋天
+                </button>
+                <button id="winterBtn" class="season-btn px-6 py-3 rounded-full bg-winter text-white font-medium shadow-lg hover:shadow-winter/30 transition-all hover:scale-105 active:scale-95">
+                    <i class="fa-solid fa-snowflake mr-2"></i>冬天
+                </button>
+            </div>
+        </header>
+
+        <!-- 游戏区域 -->
+        <main>
+            <!-- 游戏统计 -->
+            <div class="flex flex-wrap justify-between items-center mb-6 px-4 py-3 bg-white rounded-xl shadow-md">
+                <div class="flex flex-wrap items-center space-x-4">
+                    <div class="text-center">
+                        <p class="text-gray-500 text-sm">已配对</p>
+                        <p id="matchedCount" class="text-primary font-bold text-xl">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-500 text-sm">尝试次数</p>
+                        <p id="attemptsCount" class="text-secondary font-bold text-xl">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-500 text-sm">准确率</p>
+                        <p id="accuracyRate" class="text-green-600 font-bold text-xl">0%</p>
+                    </div>
+                    <div id="timerContainer" class="hidden text-center">
+                        <p class="text-gray-500 text-sm">剩余时间</p>
+                        <p id="timer" class="text-red-600 font-bold text-xl">60</p>
+                    </div>
+                </div>
+                <button id="restartBtn" class="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors">
+                    <i class="fa-solid fa-refresh mr-1"></i>重新开始
+                </button>
+            </div>
+
+            <!-- 卡片网格 -->
+            <div id="gameGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+                <!-- 卡片将通过 JavaScript 动态生成 -->
+            </div>
+
+            <!-- 游戏完成提示 -->
+            <div id="successModal" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all scale-100 shadow-2xl">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-500 mb-4">
+                            <i class="fa-solid fa-check text-3xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">恭喜你！</h2>
+                        <p id="successMessage" class="text-gray-600 mb-6">你已经成功配对了所有节气！</p>
+                        <div id="timeResult" class="mb-6 text-lg font-medium text-primary hidden"></div>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button id="playAgainBtn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                再玩一次
+                            </button>
+                            <button id="changeSeasonBtn" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                                更换季节
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 游戏失败提示 -->
+            <div id="failModal" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 transform transition-all scale-100 shadow-2xl">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-4">
+                            <i class="fa-solid fa-times text-3xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">时间到！</h2>
+                        <p class="text-gray-600 mb-6">很遗憾，你未能在规定时间内完成所有配对。</p>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button id="tryAgainBtn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                再试一次
+                            </button>
+                            <button id="backToNormalBtn" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                                返回普通模式
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>部分资源来自网络</p>
+        </footer>
+    </div>
+
+    <script>
+        // 节气数据
+        const solarTermsData = {
+            spring: [
+                { english: "Start of Spring", chinese: "立春" },
+                { english: "Rain Water", chinese: "雨水" },
+                { english: "Insects Awaken", chinese: "惊蛰" },
+                { english: "Spring Equinox", chinese: "春分" },
+                { english: "Clear and Bright", chinese: "清明" },
+                { english: "Grain Rain", chinese: "谷雨" }
+            ],
+            summer: [
+                { english: "Start of Summer", chinese: "立夏" },
+                { english: "Grain Buds", chinese: "小满" },
+                { english: "Grain in Ear", chinese: "芒种" },
+                { english: "Summer Solstice", chinese: "夏至" },
+                { english: "Minor Heat", chinese: "小暑" },
+                { english: "Major Heat", chinese: "大暑" }
+            ],
+            autumn: [
+                { english: "Start of Autumn", chinese: "立秋" },
+                { english: "the End of Heat", chinese: "处暑" },
+                { english: "White Dew", chinese: "白露" },
+                { english: "Autumn Equinox", chinese: "秋分" },
+                { english: "Cold Dew", chinese: "寒露" },
+                { english: "Frost's Descent", chinese: "霜降" }
+            ],
+            winter: [
+                { english: "Start of Winter", chinese: "立冬" },
+                { english: "Minor Snow", chinese: "小雪" },
+                { english: "Major Snow", chinese: "大雪" },
+                { english: "Winter Solstice", chinese: "冬至" },
+                { english: "Minor Cold", chinese: "小寒" },
+                { english: "Major Cold", chinese: "大寒" }
+            ]
+        };
+
+        // 游戏状态
+        let currentSeason = 'spring';
+        let gameMode = 'normal'; // normal 或 timed
+        let gameCards = [];
+        let selectedCards = [];
+        let matchedPairs = 0;
+        let attempts = 0;
+        let gameActive = true;
+        let timer = null;
+        let startTime = 0;
+        let timeLeft = 60; // 计时模式的时间（秒）
+
+        // DOM 元素
+        const gameGrid = document.getElementById('gameGrid');
+        const matchedCountEl = document.getElementById('matchedCount');
+        const attemptsCountEl = document.getElementById('attemptsCount');
+        const accuracyRateEl = document.getElementById('accuracyRate');
+        const timerContainer = document.getElementById('timerContainer');
+        const timerEl = document.getElementById('timer');
+        const restartBtn = document.getElementById('restartBtn');
+        const successModal = document.getElementById('successModal');
+        const successMessage = document.getElementById('successMessage');
+        const timeResult = document.getElementById('timeResult');
+        const failModal = document.getElementById('failModal');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const changeSeasonBtn = document.getElementById('changeSeasonBtn');
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+        const backToNormalBtn = document.getElementById('backToNormalBtn');
+        const normalModeBtn = document.getElementById('normalModeBtn');
+        const timedModeBtn = document.getElementById('timedModeBtn');
+        const seasonBtns = document.querySelectorAll('.season-btn');
+
+        // 初始化游戏
+        function initGame(season) {
+            // 停止可能正在运行的计时器
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            
+            // 重置游戏状态
+            currentSeason = season;
+            gameCards = [];
+            selectedCards = [];
+            matchedPairs = 0;
+            attempts = 0;
+            gameActive = true;
+            
+            // 更新游戏统计
+            updateStats();
+            
+            // 隐藏所有模态框
+            successModal.classList.add('hidden');
+            failModal.classList.add('hidden');
+            
+            // 显示或隐藏计时器
+            if (gameMode === 'timed') {
+                timerContainer.classList.remove('hidden');
+                timeLeft = 60;
+                timerEl.textContent = timeLeft;
+                timerEl.classList.remove('timer-warning');
+                
+                // 启动计时器
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerEl.textContent = timeLeft;
+                    
+                    if (timeLeft <= 10) {
+                        timerEl.classList.add('timer-warning');
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        gameActive = false;
+                        showFailModal();
+                    }
+                }, 1000);
+                
+                // 记录开始时间
+                startTime = Date.now();
+            } else {
+                timerContainer.classList.add('hidden');
+            }
+            
+            // 获取当前季节的节气数据
+            const terms = solarTermsData[season];
+            
+            // 创建卡片数组（中英文各一份）
+            const allCards = [...terms, ...terms].map((term, index) => ({
+                id: index,
+                english: term.english,
+                chinese: term.chinese,
+                isSelected: false,
+                isMatched: false,
+                type: index < terms.length ? 'english' : 'chinese'
+            }));
+            
+            // 洗牌
+            shuffleArray(allCards);
+            
+            // 生成游戏卡片
+            generateGameCards(allCards);
+            
+            // 更新季节按钮状态
+            updateSeasonButtons();
+            
+            // 更新模式按钮状态
+            updateModeButtons();
+        }
+
+        // 洗牌算法
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // 生成游戏卡片
+        function generateGameCards(cards) {
+            gameGrid.innerHTML = '';
+            gameCards = cards;
+            
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card-hover cursor-pointer rounded-xl shadow-md transition-all duration-300 border-2 border-transparent';
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.term = card.chinese;
+                cardElement.dataset.type = card.type;
+                
+                // 设置卡片颜色主题
+                let bgColorClass = '';
+                let textColorClass = '';
+                
+                switch(currentSeason) {
+                    case 'spring': 
+                        bgColorClass = 'bg-spring/10 hover:bg-spring/20';
+                        textColorClass = card.type === 'english' ? 'text-spring-700' : 'text-spring-800';
+                        break;
+                    case 'summer': 
+                        bgColorClass = 'bg-summer/10 hover:bg-summer/20';
+                        textColorClass = card.type === 'english' ? 'text-summer-700' : 'text-summer-800';
+                        break;
+                    case 'autumn': 
+                        bgColorClass = 'bg-autumn/10 hover:bg-autumn/20';
+                        textColorClass = card.type === 'english' ? 'text-autumn-700' : 'text-autumn-800';
+                        break;
+                    case 'winter': 
+                        bgColorClass = 'bg-winter/10 hover:bg-winter/20';
+                        textColorClass = card.type === 'english' ? 'text-winter-700' : 'text-winter-800';
+                        break;
+                }
+                
+                cardElement.innerHTML = `
+                    <div class="w-full h-32 md:h-40 rounded-xl flex items-center justify-center ${bgColorClass}">
+                        <div class="text-center p-3">
+                            <p class="font-medium ${textColorClass} text-lg md:text-xl">
+                                ${card.type === 'english' ? card.english : card.chinese}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                cardElement.addEventListener('click', () => selectCard(cardElement));
+                gameGrid.appendChild(cardElement);
+            });
+        }
+
+        // 选择卡片
+        function selectCard(cardElement) {
+            const cardId = parseInt(cardElement.dataset.id);
+            const card = gameCards.find(c => c.id === cardId);
+            
+            // 检查卡片是否已匹配或已选中，或者游戏是否暂停
+            if (card.isMatched || card.isSelected || !gameActive) return;
+            
+            // 检查是否已经选择了同类型的卡片
+            if (selectedCards.length > 0 && selectedCards[0].dataset.type === card.type) {
+                // 取消之前选择的卡片
+                const prevCard = selectedCards[0];
+                const prevCardData = gameCards.find(c => c.id === parseInt(prevCard.dataset.id));
+                prevCardData.isSelected = false;
+                prevCard.classList.remove('border-primary', 'bg-primary/5');
+                
+                // 清空已选卡片
+                selectedCards = [];
+            }
+            
+            // 选中卡片
+            card.isSelected = true;
+            cardElement.classList.add('border-primary', 'bg-primary/5');
+            selectedCards.push(cardElement);
+            
+            // 检查是否有两张卡片被选中
+            if (selectedCards.length === 2) {
+                gameActive = false;
+                attempts++;
+                updateStats();
+                
+                setTimeout(() => {
+                    checkForMatch();
+                }, 500);
+            }
+        }
+
+        // 检查匹配
+        function checkForMatch() {
+            const card1 = selectedCards[0];
+            const card2 = selectedCards[1];
+            
+            const card1Data = gameCards.find(c => c.id === parseInt(card1.dataset.id));
+            const card2Data = gameCards.find(c => c.id === parseInt(card2.dataset.id));
+            
+            // 检查是否匹配（同一节气的中英文）
+            if (card1Data.chinese === card2Data.chinese && card1Data.type !== card2Data.type) {
+                // 匹配成功
+                card1.classList.remove('border-primary', 'bg-primary/5');
+                card2.classList.remove('border-primary', 'bg-primary/5');
+                card1.classList.add('matched-card');
+                card2.classList.add('matched-card');
+                
+                // 添加匹配成功的动画
+                card1.classList.add('animate-pulse');
+                card2.classList.add('animate-pulse');
+                
+                setTimeout(() => {
+                    card1.classList.remove('animate-pulse');
+                    card2.classList.remove('animate-pulse');
+                }, 1000);
+                
+                // 更新卡片状态
+                card1Data.isMatched = true;
+                card2Data.isMatched = true;
+                
+                matchedPairs++;
+                updateStats();
+                
+                // 检查游戏是否完成
+                if (matchedPairs === solarTermsData[currentSeason].length) {
+                    clearInterval(timer);
+                    timer = null;
+                    
+                    setTimeout(() => {
+                        showSuccessModal();
+                    }, 500);
+                }
+            } else {
+                // 匹配失败，取消选中
+                card1.classList.remove('border-primary', 'bg-primary/5');
+                card2.classList.remove('border-primary', 'bg-primary/5');
+                
+                // 更新卡片状态
+                card1Data.isSelected = false;
+                card2Data.isSelected = false;
+                
+                // 添加匹配失败的动画
+                card1.classList.add('animate-shake');
+                card2.classList.add('animate-shake');
+                
+                setTimeout(() => {
+                    card1.classList.remove('animate-shake');
+                    card2.classList.remove('animate-shake');
+                }, 500);
+            }
+            
+            // 重置选中的卡片
+            selectedCards = [];
+            gameActive = true;
+        }
+
+        // 更新游戏统计
+        function updateStats() {
+            matchedCountEl.textContent = matchedPairs;
+            attemptsCountEl.textContent = attempts;
+            
+            // 计算准确率
+            const accuracy = attempts > 0 ? Math.round((matchedPairs / attempts) * 100) : 0;
+            accuracyRateEl.textContent = `${accuracy}%`;
+            
+            // 更新准确率颜色
+            if (accuracy >= 80) {
+                accuracyRateEl.classList.remove('text-yellow-600', 'text-red-600');
+                accuracyRateEl.classList.add('text-green-600');
+            } else if (accuracy >= 50) {
+                accuracyRateEl.classList.remove('text-green-600', 'text-red-600');
+                accuracyRateEl.classList.add('text-yellow-600');
+            } else {
+                accuracyRateEl.classList.remove('text-green-600', 'text-yellow-600');
+                accuracyRateEl.classList.add('text-red-600');
+            }
+        }
+
+        // 显示成功提示
+        function showSuccessModal() {
+            successModal.classList.remove('hidden');
+            
+            // 如果是计时模式，显示用时
+            if (gameMode === 'timed') {
+                const endTime = Date.now();
+                const timeUsed = Math.floor((endTime - startTime) / 1000);
+                timeResult.textContent = `用时: ${timeUsed}秒`;
+                timeResult.classList.remove('hidden');
+            } else {
+                timeResult.classList.add('hidden');
+            }
+        }
+
+        // 显示失败提示
+        function showFailModal() {
+            failModal.classList.remove('hidden');
+        }
+
+        // 更新季节按钮状态
+        function updateSeasonButtons() {
+            seasonBtns.forEach(btn => {
+                const season = btn.id.replace('Btn', '');
+                if (season === currentSeason) {
+                    btn.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
+                    btn.classList.remove('hover:scale-105');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-2', 'ring-primary');
+                    btn.classList.add('hover:scale-105');
+                }
+            });
+        }
+
+        // 更新模式按钮状态
+        function updateModeButtons() {
+            if (gameMode === 'normal') {
+                normalModeBtn.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
+                normalModeBtn.classList.remove('hover:scale-105');
+                timedModeBtn.classList.remove('ring-2', 'ring-offset-2', 'ring-primary');
+                timedModeBtn.classList.add('hover:scale-105');
+            } else {
+                timedModeBtn.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
+                timedModeBtn.classList.remove('hover:scale-105');
+                normalModeBtn.classList.remove('ring-2', 'ring-offset-2', 'ring-primary');
+                normalModeBtn.classList.add('hover:scale-105');
+            }
+        }
+
+        // 添加季节转换动画
+        function addSeasonTransition(season) {
+            const body = document.body;
+            
+            // 移除所有季节类
+            body.classList.remove('spring-bg', 'summer-bg', 'autumn-bg', 'winter-bg');
+            
+            // 添加新的季节类
+            setTimeout(() => {
+                body.classList.add(`${season}-bg`);
+            }, 100);
+        }
+
+        // 事件监听器
+        restartBtn.addEventListener('click', () => initGame(currentSeason));
+        playAgainBtn.addEventListener('click', () => initGame(currentSeason));
+        changeSeasonBtn.addEventListener('click', () => {
+            successModal.classList.add('hidden');
+            // 重置季节按钮状态
+            seasonBtns.forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-2', 'ring-primary');
+                btn.classList.add('hover:scale-105');
+            });
+        });
+        tryAgainBtn.addEventListener('click', () => initGame(currentSeason));
+        backToNormalBtn.addEventListener('click', () => {
+            gameMode = 'normal';
+            initGame(currentSeason);
+        });
+        
+        // 模式切换
+        normalModeBtn.addEventListener('click', () => {
+            if (gameMode !== 'normal') {
+                gameMode = 'normal';
+                initGame(currentSeason);
+            }
+        });
+        
+        timedModeBtn.addEventListener('click', () => {
+            if (gameMode !== 'timed') {
+                gameMode = 'timed';
+                initGame(currentSeason);
+            }
+        });
+
+        // 季节按钮事件
+        document.getElementById('springBtn').addEventListener('click', () => {
+            if (currentSeason !== 'spring') {
+                addSeasonTransition('spring');
+                initGame('spring');
+            }
+        });
+        
+        document.getElementById('summerBtn').addEventListener('click', () => {
+            if (currentSeason !== 'summer') {
+                addSeasonTransition('summer');
+                initGame('summer');
+            }
+        });
+        
+        document.getElementById('autumnBtn').addEventListener('click', () => {
+            if (currentSeason !== 'autumn') {
+                addSeasonTransition('autumn');
+                initGame('autumn');
+            }
+        });
+        
+        document.getElementById('winterBtn').addEventListener('click', () => {
+            if (currentSeason !== 'winter') {
+                addSeasonTransition('winter');
+                initGame('winter');
+            }
+        });
+
+        // 添加键盘导航支持
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                initGame(currentSeason);
+            }
+        });
+
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', () => {
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-5px); }
+                    75% { transform: translateX(5px); }
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.7; }
+                }
+                @keyframes warning {
+                    0%, 100% { color: #ef4444; }
+                    50% { color: #991b1b; }
+                }
+                .animate-shake {
+                    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+                }
+                .animate-pulse {
+                    animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                .timer-warning {
+                    animation: warning 1s ease-in-out infinite;
+                }
+                .spring-bg {
+                    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+                }
+                .summer-bg {
+                    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+                }
+                .autumn-bg {
+                    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+                }
+                .winter-bg {
+                    background: linear-gradient(135deg, #e8f4f8 0%, #bbdefb 100%);
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 初始化春天季节的普通模式游戏
+            gameMode = 'normal';
+            initGame('spring');
+            document.body.classList.add('spring-bg');
+        });
+    </script>
+</body>
+</html>
+    

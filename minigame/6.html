@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24节气知识问答</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #FFC0CB; /* 纯粉色背景 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .game-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #E75480;
+            margin-bottom: 20px;
+        }
+        
+        .timer {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #E75480;
+        }
+        
+        .score {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #E75480;
+        }
+        
+        .question {
+            font-size: 18px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            background-color: #FFE4E1;
+            border: 2px solid #E75480;
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            background-color: #E75480;
+            color: white;
+        }
+        
+        .feedback {
+            font-size: 18px;
+            margin: 20px 0;
+            min-height: 27px;
+        }
+        
+        .correct {
+            color: #4CAF50;
+        }
+        
+        .incorrect {
+            color: #F44336;
+        }
+        
+        .next-btn {
+            background-color: #E75480;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+        }
+        
+        .next-btn:hover {
+            background-color: #C2185B;
+        }
+        
+        .start-btn {
+            background-color: #E75480;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+        
+        .start-btn:hover {
+            background-color: #C2185B;
+        }
+        
+        .restart-btn {
+            background-color: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .restart-btn:hover {
+            background-color: #F57C00;
+        }
+        
+        .result {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>24节气知识问答</h1>
+        <div id="start-screen">
+            <p>测试你对24节气的了解程度！</p>
+            <p>每题答对得10分，答错扣5分</p>
+            <button class="start-btn" id="start-btn">开始游戏</button>
+        </div>
+        
+        <div id="game-screen" style="display: none;">
+            <div class="timer" id="timer">时间: 0秒</div>
+            <div class="score" id="score">得分: 0</div>
+            <div class="question" id="question"></div>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="button-group">
+                <button class="next-btn" id="next-btn" style="display: none;">下一题</button>
+                <button class="restart-btn" id="restart-game-btn" style="display: none;">重新开始</button>
+            </div>
+        </div>
+        
+        <div id="end-screen" style="display: none;">
+            <div class="result" id="result"></div>
+            <div class="button-group">
+                <button class="start-btn" id="restart-btn">再玩一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 题目数据
+        const questions = [
+            {
+                question: "During ______, insects begin to seek food outside.",
+                options: ["A. Grain Rain", "B. Start of Spring", "C. Insects Awaken"],
+                answer: "C. Insects Awaken"
+            },
+            {
+                question: "On ______ Day, people usually eat spring pancakes and spring rolls.",
+                options: ["A. Rain Water", "B. Start of Spring", "C. Clear and Bright"],
+                answer: "B. Start of Spring"
+            },
+            {
+                question: "______ marks the start of the fishermen's first voyage of the year in Tianjin.",
+                options: ["A. Grain Rain", "B. Rain Water", "C. Insects Awaken"],
+                answer: "A. Grain Rain"
+            },
+            {
+                question: "Which is not the name of 清明?",
+                options: ["A. Tomb-sweeping Day", "B. Qingming Festival", "C. Clear and Bright", "D. Spring Equinox"],
+                answer: "D. Spring Equinox"
+            },
+            {
+                question: "About Spring Equinox, which is NOT right?",
+                options: [
+                    "A. It's around March 20-21.",
+                    "B. Day and night are equal in length.",
+                    "C. People can fly kites and enjoy spring flowers.",
+                    "D. The weather gets colder and colder."
+                ],
+                answer: "D. The weather gets colder and colder."
+            },
+            {
+                question: "Which poem is not about spring?",
+                options: [
+                    "A. 一阵催花雨，数声惊蛰雷。",
+                    "B. 好雨知时节，当春乃发生。",
+                    "C. 小楼一夜听春雨，深巷明朝卖杏花。",
+                    "D. 黄梅时节家家雨，青草池塘处处蛙。"
+                ],
+                answer: "D. 黄梅时节家家雨，青草池塘处处蛙。"
+            },
+            {
+                question: "______ is the hottest time of the year in Tianjin.",
+                options: ["A. Minor Heat", "B. Summer Solstice", "C. Major Heat"],
+                answer: "C. Major Heat"
+            },
+            {
+                question: "______ has the longest day and the shortest night of the year.",
+                options: ["A. Start of Summer", "B. Summer Solstice", "C. Grain in Ear"],
+                answer: "B. Summer Solstice"
+            },
+            {
+                question: "______ marks the harvest is coming.",
+                options: ["A. Grain Rain", "B. Grain Buds", "C. Grain in Ear"],
+                answer: "C. Grain in Ear"
+            },
+            {
+                question: "During ______, the grain of the crop begins to become full, but not fully mature.",
+                options: ["A. Grain Buds", "B. Grain in Ear", "C. Minor Heat"],
+                answer: "A. Grain Buds"
+            },
+            {
+                question: "About Summer Solstice, which is not right?",
+                options: [
+                    "A. It's around June 21-22.",
+                    "B. The longest day and shortest night of the year.",
+                    "C. It's a good time to enjoy chrysanthemums.",
+                    "D. It symbolizes the peak of summer."
+                ],
+                answer: "C. It's a good time to enjoy chrysanthemums."
+            },
+            {
+                question: "Which poem is about summer?",
+                options: [
+                    "A. 清明时节雨纷纷，路上行人欲断魂。",
+                    "B. 天街小雨润如酥，草色遥看近却无。",
+                    "C. 最爱垄头麦，迎风笑落红。",
+                    "D. 自古逢秋悲寂寥， 我言秋日胜春朝。"
+                ],
+                answer: "C. 最爱垄头麦，迎风笑落红。"
+            },
+            {
+                question: "People in Wenzhou, East China's Zhejiang province, have a tradition of gathering 10 herbal medicines on the day of ______.",
+                options: ["A. Cold Dew", "B. Summer Solstice", "C. White Dew"],
+                answer: "C. White Dew"
+            },
+            {
+                question: "When ______ comes, summer heat has gone.",
+                options: ["A. The End of Heat", "B. Minor Heat", "C. Major Heat"],
+                answer: "A. The End of Heat"
+            },
+            {
+                question: "During ______, people in Tianjin have the custom to eat melons.",
+                options: ["A. Autumn Equinox", "B. Start of Autumn", "C. Frost's Decent"],
+                answer: "B. Start of Autumn"
+            },
+            {
+                question: "On ______, the day and night are of equal length.",
+                options: ["A. Winter Solstice", "B. Autumn Equinox", "C. Summer Solstice"],
+                answer: "B. Autumn Equinox"
+            },
+            {
+                question: "About Autumn Equinox, which is not right?",
+                options: [
+                    "A. It is around September 20-21.",
+                    "B. It's a good time to enjoy chrysanthemums in full blossom.",
+                    "C. People make the egg stand can bring them good luck.",
+                    "D. In this season, crabs are delicious."
+                ],
+                answer: "A. It is around September 20-21."
+            },
+            {
+                question: "Which poem is about autumn?",
+                options: [
+                    "A. 千山鸟飞绝，万径人踪灭。",
+                    "B. 停车坐爱枫林晚，霜叶红于二月花。",
+                    "C. 小荷才露尖尖角，早有蜻蜓立上头。",
+                    "D. 春色满园关不住，一枝红杏出墙来。"
+                ],
+                answer: "B. 停车坐爱枫林晚，霜叶红于二月花。"
+            },
+            {
+                question: "Generally, ______ is the coldest period in China.",
+                options: ["A. Minor Snow", "B. Minor Cold", "C. Major Cold"],
+                answer: "B. Minor Cold"
+            },
+            {
+                question: "Generally, People in Tianjin won't eat dumplings on ______.",
+                options: ["A. Major Snow", "B. Start of Winter", "C. Winter Solstice"],
+                answer: "A. Major Snow"
+            },
+            {
+                question: "During ______, people in Tianjin usually enjoy the winter sports.",
+                options: ["A. Major Snow", "B. Major Cold", "C. Minor Cold"],
+                answer: "B. Major Cold"
+            },
+            {
+                question: "On ______, the day is the shortest and the night is the longest.",
+                options: ["A. Spring Equinox", "B. Summer Solstice", "C. Autumn Equinox", "D. Winter Solstice"],
+                answer: "D. Winter Solstice"
+            },
+            {
+                question: "About Winter Solstice, which is wrong?",
+                options: [
+                    "A. It is around December 22.",
+                    "B. People in the north of China usually eat dumplings.",
+                    "C. People make the egg stand to bring them good luck.",
+                    "D. It has the shortest day and the longest night."
+                ],
+                answer: "C. People make the egg stand to bring them good luck."
+            },
+            {
+                question: "Which poem is about winter?",
+                options: [
+                    "A. 墙角数枝梅，灵寒独自开。",
+                    "B. 无边落木萧萧下，不尽长江滚滚来。",
+                    "C. 接天莲叶无穷碧，映日荷花别样红。",
+                    "D. 不知细叶谁裁出，二月春风似剪刀。"
+                ],
+                answer: "A. 墙角数枝梅，灵寒独自开。"
+            },
+            {
+                question: "There are three solar terms that it is said making the egg stand can bring people good luck. Which of the following is not?",
+                options: ["A. Spring Equinox", "B. Start of Spring", "C. Autumn Equinox", "D. Start of Autumn"],
+                answer: "D. Start of Autumn"
+            }
+        ];
+
+        // 游戏变量
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timer = 0;
+        let timerInterval;
+        let shuffledQuestions = [];
+
+        // DOM元素
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const feedbackElement = document.getElementById('feedback');
+        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const resultElement = document.getElementById('result');
+
+        // 开始游戏
+        function startGame() {
+            // 重置游戏状态
+            currentQuestionIndex = 0;
+            score = 0;
+            timer = 0;
+            
+            // 打乱题目顺序
+            shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+            
+            // 显示游戏界面
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            
+            // 开始计时
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timer++;
+                timerElement.textContent = `时间: ${timer}秒`;
+            }, 1000);
+            
+            // 显示第一题
+            showQuestion();
+        }
+
+        // 显示题目
+        function showQuestion() {
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                endGame();
+                return;
+            }
+            
+            const question = shuffledQuestions[currentQuestionIndex];
+            questionElement.textContent = question.question;
+            optionsElement.innerHTML = '';
+            feedbackElement.textContent = '';
+            feedbackElement.className = 'feedback';
+            nextBtn.style.display = 'none';
+            restartGameBtn.style.display = 'none';
+            
+            // 创建选项按钮
+            question.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => selectAnswer(option));
+                optionsElement.appendChild(optionElement);
+            });
+            
+            // 更新分数显示
+            scoreElement.textContent = `得分: ${score}`;
+        }
+
+        // 选择答案
+        function selectAnswer(selectedOption) {
+            const question = shuffledQuestions[currentQuestionIndex];
+            const options = optionsElement.querySelectorAll('.option');
+            
+            // 禁用所有选项
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+            
+            // 检查答案
+            if (selectedOption === question.answer) {
+                feedbackElement.textContent = '回答正确！';
+                feedbackElement.className = 'feedback correct';
+                score += 10;
+            } else {
+                feedbackElement.textContent = `回答错误！正确答案是: ${question.answer}`;
+                feedbackElement.className = 'feedback incorrect';
+                score -= 5;
+            }
+            
+            // 更新分数显示
+            scoreElement.textContent = `得分: ${score}`;
+            
+            // 显示下一题和重新开始按钮
+            nextBtn.style.display = 'block';
+            restartGameBtn.style.display = 'block';
+        }
+
+        // 下一题
+        function nextQuestion() {
+            currentQuestionIndex++;
+            showQuestion();
+        }
+
+        // 结束游戏
+        function endGame() {
+            clearInterval(timerInterval);
+            
+            // 显示结束界面
+            gameScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            
+            // 显示结果
+            resultElement.textContent = `游戏结束！你的得分是: ${score}分，用时: ${timer}秒`;
+        }
+
+        // 事件监听
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        restartGameBtn.addEventListener('click', startGame);
+        nextBtn.addEventListener('click', nextQuestion);
+    </script>
+</body>
+</html>

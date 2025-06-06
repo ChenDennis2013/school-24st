@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24节气中英文消除游戏</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 20px;
+        }
+        h1 {
+            color: #2e8b57;
+        }
+        #englishTerms {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px auto;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .english-term {
+            margin: 8px;
+            padding: 10px 15px;
+            background-color: #4682b4;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .english-term:hover {
+            background-color: #5f9ea0;
+            transform: scale(1.05);
+        }
+        .english-term.matched {
+            background-color: #90ee90;
+            color: #006400;
+            text-decoration: line-through;
+            transform: scale(0.95);
+        }
+        #cannon {
+            margin: 30px auto;
+            width: 100px;
+            height: 100px;
+            background-color: #8b4513;
+            border-radius: 50% 50% 0 0;
+            position: relative;
+        }
+        #cannon:before {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background-color: #696969;
+            bottom: -15px;
+            left: 20px;
+            border-radius: 0 0 10px 10px;
+        }
+        #chineseTerm {
+            font-size: 24px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #ffa07a;
+            color: #8b0000;
+            border-radius: 5px;
+            display: inline-block;
+            min-width: 100px;
+        }
+        #score {
+            font-size: 20px;
+            margin: 20px;
+            color: #2e8b57;
+        }
+        #timer {
+            font-size: 20px;
+            margin: 10px;
+            color: #4169e1;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .shuffle-effect {
+            animation: shuffleBlink 0.5s 2;
+        }
+        @keyframes shuffleBlink {
+            0% { background-color: #4682b4; }
+            50% { background-color: #ffcc00; }
+            100% { background-color: #4682b4; }
+        }
+    </style>
+</head>
+<body>
+    <h1>24节气中英文消除游戏</h1>
+    <div id="timer">时间: 60秒</div>
+    <div id="score">得分: 0</div>
+    
+    <div id="englishTerms"></div>
+    
+    <div id="cannon"></div>
+    <div id="chineseTerm"></div>
+    
+    <button id="startBtn">开始游戏</button>
+    
+    <script>
+        const terms = {
+            "Start of Spring": "立春",
+            "Rain Water": "雨水",
+            "Insects Awaken": "惊蛰",
+            "Spring Equinox": "春分",
+            "Clear and Bright": "清明",
+            "Grain Rain": "谷雨",
+            "Start of Summer": "立夏",
+            "Grain Buds": "小满",
+            "Grain in Ear": "芒种",
+            "Summer Solstice": "夏至",
+            "Minor Heat": "小暑",
+            "Major Heat": "大暑",
+            "Start of Autumn": "立秋",
+            "the End of Heat": "处暑",
+            "White Dew": "白露",
+            "Autumn Equinox": "秋分",
+            "Cold Dew": "寒露",
+            "Frost's Descent": "霜降",
+            "Start of Winter": "立冬",
+            "Minor Snow": "小雪",
+            "Major Snow": "大雪",
+            "Winter Solstice": "冬至",
+            "Minor Cold": "小寒",
+            "Major Cold": "大寒"
+        };
+        
+        let score = 0;
+        let timeLeft = 60;
+        let timer;
+        let currentChineseTerm = "";
+        let gameStarted = false;
+        let remainingTerms = {...terms};
+        
+        const englishTermsContainer = document.getElementById('englishTerms');
+        const chineseTermDisplay = document.getElementById('chineseTerm');
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        
+        // 随机打乱数组顺序的函数
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // 重新排列未匹配的英文节气
+        function shuffleUnmatchedTerms() {
+            const unmatchedTerms = [];
+            const termElements = document.querySelectorAll('.english-term:not(.matched)');
+            
+            // 收集未匹配的术语
+            termElements.forEach(element => {
+                unmatchedTerms.push({
+                    element: element,
+                    english: element.dataset.english
+                });
+            });
+            
+            // 打乱顺序
+            const shuffledTerms = shuffleArray(unmatchedTerms.map(item => item.english));
+            
+            // 更新显示顺序
+            termElements.forEach((element, index) => {
+                element.textContent = shuffledTerms[index];
+                element.dataset.english = shuffledTerms[index];
+                element.classList.add('shuffle-effect');
+                setTimeout(() => {
+                    element.classList.remove('shuffle-effect');
+                }, 1000);
+            });
+        }
+        
+        function initGame() {
+            // 创建英文节气按钮（随机顺序）
+            englishTermsContainer.innerHTML = '';
+            const shuffledEnglishTerms = shuffleArray(Object.keys(terms));
+            
+            for (const engTerm of shuffledEnglishTerms) {
+                const termElement = document.createElement('div');
+                termElement.className = 'english-term';
+                termElement.textContent = engTerm;
+                termElement.dataset.english = engTerm;
+                termElement.addEventListener('click', handleTermClick);
+                englishTermsContainer.appendChild(termElement);
+            }
+            
+            score = 0;
+            timeLeft = 60;
+            scoreDisplay.textContent = `得分: ${score}`;
+            timerDisplay.textContent = `时间: ${timeLeft}秒`;
+            gameStarted = true;
+            remainingTerms = {...terms};
+            
+            // 开始计时
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `时间: ${timeLeft}秒`;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+            
+            // 发射第一个中文节气
+            launchChineseTerm();
+        }
+        
+        function launchChineseTerm() {
+            if (!gameStarted) return;
+            
+            const chineseTerms = Object.values(remainingTerms);
+            if (chineseTerms.length === 0) {
+                endGame(true);
+                return;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * chineseTerms.length);
+            currentChineseTerm = chineseTerms[randomIndex];
+            chineseTermDisplay.textContent = currentChineseTerm;
+        }
+        
+        function handleTermClick(event) {
+            if (!gameStarted) return;
+            
+            const selectedEnglish = event.target.dataset.english;
+            const correctChinese = terms[selectedEnglish];
+            
+            if (correctChinese === currentChineseTerm) {
+                // 匹配正确
+                event.target.classList.add('matched');
+                score += 10;
+                scoreDisplay.textContent = `得分: ${score}`;
+                
+                // 从剩余术语中删除
+                delete remainingTerms[selectedEnglish];
+                
+                // 10%概率打乱未匹配的术语
+                if (Math.random() < 0.1) {
+                    setTimeout(() => {
+                        shuffleUnmatchedTerms();
+                        // 添加提示效果
+                        const notification = document.createElement('div');
+                        notification.textContent = '术语被打乱了！';
+                        notification.style.position = 'fixed';
+                        notification.style.top = '20px';
+                        notification.style.left = '50%';
+                        notification.style.transform = 'translateX(-50%)';
+                        notification.style.backgroundColor = 'rgba(255, 215, 0, 0.9)';
+                        notification.style.padding = '10px 20px';
+                        notification.style.borderRadius = '5px';
+                        notification.style.zIndex = '1000';
+                        document.body.appendChild(notification);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 1500);
+                    }, 300);
+                }
+                
+                // 发射下一个中文术语
+                setTimeout(launchChineseTerm, 500);
+            } else {
+                // 匹配错误
+                event.target.style.backgroundColor = '#ff6b6b';
+                setTimeout(() => {
+                    event.target.style.backgroundColor = '#4682b4';
+                }, 500);
+                
+                if (score > 0) {
+                    score -= 5;
+                    scoreDisplay.textContent = `得分: ${score}`;
+                }
+            }
+        }
+        
+        function endGame(isWin = false) {
+            clearInterval(timer);
+            gameStarted = false;
+            
+            if (isWin) {
+                alert(`恭喜你赢了！最终得分: ${score}`);
+            } else {
+                alert(`游戏结束！最终得分: ${score}`);
+            }
+        }
+        
+        startBtn.addEventListener('click', initGame);
+    </script>
+</body>
+</html>

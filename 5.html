@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>24节气射气球游戏</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            margin: 0 auto;
+            border: 2px solid #4682b4;
+            border-radius: 10px;
+            background-color: #e6f2ff;
+            overflow: hidden;
+        }
+        #question {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #2e8b57;
+        }
+        #score {
+            font-size: 20px;
+            margin: 5px 0;
+            color: #4682b4;
+        }
+        #timer {
+            font-size: 20px;
+            margin: 5px 0;
+            color: #d2691e;
+            font-weight: bold;
+        }
+        .balloon {
+            position: absolute;
+            width: 80px;
+            height: 100px;
+            background-color: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            text-align: center;
+            padding: 5px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .balloon:hover {
+            transform: scale(1.05);
+        }
+        #start-screen, #end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .correct {
+            background-color: #4CAF50 !important;
+        }
+        .wrong {
+            background-color: #f44336 !important;
+        }
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .visible {
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>24节气射气球游戏</h1>
+    <div id="timer">时间: 60秒</div>
+    <div id="score">得分: 0</div>
+    <div id="question"></div>
+    <div id="game-container">
+        <div id="message">Wonderful!</div>
+        <div id="start-screen">
+            <h2>24节气射气球游戏</h2>
+            <p>60秒内点击与英文节气名称对应的中文气球</p>
+            <button id="start-btn">开始游戏</button>
+        </div>
+        <div id="end-screen" style="display: none;">
+            <h2>游戏结束!</h2>
+            <p id="final-score">你的最终得分: 0</p>
+            <button id="restart-btn">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        // 节气数据
+        const seasons = {
+            "Start of Spring": "立春",
+            "Rain Water": "雨水",
+            "Insects Awaken": "惊蛰",
+            "Spring Equinox": "春分",
+            "Clear and Bright": "清明",
+            "Grain Rain": "谷雨",
+            "Start of Summer": "立夏",
+            "Grain Buds": "小满",
+            "Grain in Ear": "芒种",
+            "Summer Solstice": "夏至",
+            "Minor Heat": "小暑",
+            "Major Heat": "大暑",
+            "Start of Autumn": "立秋",
+            "the End of Heat": "处暑",
+            "White Dew": "白露",
+            "Autumn Equinox": "秋分",
+            "Cold Dew": "寒露",
+            "Frost's Descent": "霜降",
+            "Start of Winter": "立冬",
+            "Minor Snow": "小雪",
+            "Major Snow": "大雪",
+            "Winter Solstice": "冬至",
+            "Minor Cold": "小寒",
+            "Major Cold": "大寒"
+        };
+
+        // 游戏变量
+        let score = 0;
+        let usedQuestions = [];
+        let currentQuestion = "";
+        let balloonCount = 6;
+        let correctAnswer = "";
+        let gameActive = false;
+        let animations = [];
+        let timeLeft = 60;
+        let timer;
+        let messageTimeout;
+
+        // DOM元素
+        const gameContainer = document.getElementById('game-container');
+        const questionElement = document.getElementById('question');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const startScreen = document.getElementById('start-screen');
+        const endScreen = document.getElementById('end-screen');
+        const finalScoreElement = document.getElementById('final-score');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const messageElement = document.getElementById('message');
+
+        // 颜色数组
+        const colors = [
+            '#FF6B6B', '#FF8E8E', '#FFAAAA', '#FFC3C3',
+            '#FFD166', '#FFDD88', '#FFE8AA', '#FFF4CC',
+            '#06D6A0', '#4ECDC4', '#7EE8FA', '#A5FFD6',
+            '#A0C4FF', '#BDB2FF', '#C8B6FF', '#D8BBFF',
+            '#FFC8DD', '#FFD6E0', '#FFE5EC', '#FFF0F3'
+        ];
+
+        // 开始游戏
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        function startGame() {
+            // 重置游戏状态
+            score = 0;
+            usedQuestions = [];
+            scoreElement.textContent = `得分: ${score}`;
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            messageElement.classList.remove('visible');
+            gameActive = true;
+            timeLeft = 60;
+            timerElement.textContent = `时间: ${timeLeft}秒`;
+            
+            // 清除所有气球和动画
+            clearBalloons();
+            clearTimeout(messageTimeout);
+            clearInterval(timer);
+            
+            // 开始计时
+            timer = setInterval(updateTimer, 1000);
+            
+            // 生成新题目
+            generateNewQuestion();
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerElement.textContent = `时间: ${timeLeft}秒`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                endGame();
+            }
+        }
+
+        function generateNewQuestion() {
+            // 检查是否所有题目都用完了
+            if (usedQuestions.length >= Object.keys(seasons).length) {
+                showCompletionMessage();
+                return;
+            }
+            
+            // 获取未使用的题目
+            let availableQuestions = Object.keys(seasons).filter(q => !usedQuestions.includes(q));
+            currentQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+            correctAnswer = seasons[currentQuestion];
+            usedQuestions.push(currentQuestion);
+            
+            // 更新题目显示
+            questionElement.textContent = currentQuestion;
+            
+            // 创建气球
+            createBalloons();
+        }
+
+        function createBalloons() {
+            clearBalloons();
+            
+            // 包含正确答案的气球数组
+            let balloonAnswers = [correctAnswer];
+            
+            // 添加错误答案
+            let wrongAnswers = Object.values(seasons).filter(a => a !== correctAnswer);
+            while (balloonAnswers.length < balloonCount && wrongAnswers.length > 0) {
+                const randomIndex = Math.floor(Math.random() * wrongAnswers.length);
+                balloonAnswers.push(wrongAnswers[randomIndex]);
+                wrongAnswers.splice(randomIndex, 1);
+            }
+            
+            // 打乱气球答案顺序
+            balloonAnswers = shuffleArray(balloonAnswers);
+            
+            // 创建气球
+            const containerWidth = gameContainer.clientWidth;
+            const containerHeight = gameContainer.clientHeight;
+            const balloonPositions = [];
+            
+            balloonAnswers.forEach((answer, index) => {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                balloon.textContent = answer;
+                balloon.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // 确保气球不重叠
+                let left, top, overlapping;
+                let attempts = 0;
+                const maxAttempts = 100;
+                
+                do {
+                    overlapping = false;
+                    left = Math.random() * (containerWidth - 100);
+                    top = Math.random() * (containerHeight - 120) + 20;
+                    
+                    // 检查是否与现有气球重叠
+                    for (const pos of balloonPositions) {
+                        const dx = left - pos.left;
+                        const dy = top - pos.top;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) { // 100px是最小间距
+                            overlapping = true;
+                            break;
+                        }
+                    }
+                    
+                    attempts++;
+                    if (attempts >= maxAttempts) break; // 防止无限循环
+                } while (overlapping);
+                
+                balloon.style.left = `${left}px`;
+                balloon.style.top = `${top}px`;
+                balloonPositions.push({left, top});
+                
+                // 点击事件
+                balloon.addEventListener('click', () => handleBalloonClick(balloon, answer));
+                
+                gameContainer.appendChild(balloon);
+                
+                // 添加漂浮动画
+                animateBalloon(balloon);
+            });
+        }
+
+        function animateBalloon(balloon) {
+            let direction = Math.random() > 0.5 ? 1 : -1;
+            let speed = 0.5 + Math.random() * 0.5;
+            let left = parseFloat(balloon.style.left);
+            let top = parseFloat(balloon.style.top);
+            
+            const animation = () => {
+                if (!gameActive) return;
+                
+                top += speed * direction;
+                left += (Math.random() - 0.5) * 0.5;
+                
+                // 边界检查
+                if (top < 10) {
+                    top = 10;
+                    direction = 1;
+                } else if (top > gameContainer.clientHeight - 120) {
+                    top = gameContainer.clientHeight - 120;
+                    direction = -1;
+                }
+                
+                if (left < 0) {
+                    left = 0;
+                } else if (left > gameContainer.clientWidth - 80) {
+                    left = gameContainer.clientWidth - 80;
+                }
+                
+                balloon.style.top = `${top}px`;
+                balloon.style.left = `${left}px`;
+                
+                animations.push(requestAnimationFrame(animation));
+            };
+            
+            animations.push(requestAnimationFrame(animation));
+        }
+
+        function handleBalloonClick(balloon, answer) {
+            if (!gameActive) return;
+            
+            if (answer === correctAnswer) {
+                // 正确答案
+                balloon.classList.add('correct');
+                score++;
+                scoreElement.textContent = `得分: ${score}`;
+                
+                // 延迟后生成新题目
+                setTimeout(() => {
+                    if (gameActive) generateNewQuestion();
+                }, 800);
+            } else {
+                // 错误答案
+                balloon.classList.add('wrong');
+                score = Math.max(0, score - 1);
+                scoreElement.textContent = `得分: ${score}`;
+                
+                // 延迟后重新生成题目
+                setTimeout(() => {
+                    if (gameActive) generateNewQuestion();
+                }, 800);
+            }
+        }
+
+        function showCompletionMessage() {
+            messageElement.classList.add('visible');
+            messageTimeout = setTimeout(() => {
+                messageElement.classList.remove('visible');
+                endGame();
+            }, 2000);
+        }
+
+        function clearBalloons() {
+            // 清除所有动画
+            animations.forEach(animation => cancelAnimationFrame(animation));
+            animations = [];
+            
+            // 清除所有气球
+            const balloons = document.querySelectorAll('.balloon');
+            balloons.forEach(balloon => balloon.remove());
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            clearBalloons();
+            finalScoreElement.textContent = `你的最终得分: ${score}`;
+            endScreen.style.display = 'flex';
+        }
+
+        // 辅助函数：打乱数组
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+    </script>
+</body>
+</html>
